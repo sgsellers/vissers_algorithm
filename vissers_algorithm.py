@@ -524,7 +524,7 @@ class SourceExtraction:
         for key in dictionary_keys:
             dictionary_fields.append(sources[key])
 
-        # source_array = np.rec.fromarrays(dictionary_fields, names=dictionary_keys)
+        source_array = np.rec.fromarrays(dictionary_fields, names=dictionary_keys)
         savename = os.path.join(self.workBase, self.overviewSaveName)
         np.save(savename, source_array)
         return
