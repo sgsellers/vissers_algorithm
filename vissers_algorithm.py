@@ -141,9 +141,10 @@ def detect_bomb(file,
     flux = np.array(flux)
     extents = np.array(extents)
     center_array = np.empty(len(flux), dtype=object)
-    contour_array = np.array(contours, dtype=object)
+    contour_array = np.empty(len(flux), dtype=object)
     for i in range(len(flux)):
         center_array[i] = tuple(centers[i])
+        contour_array[i] = contours[i]
 
     source_information = np.rec.fromarrays(
         [
@@ -199,7 +200,7 @@ class SourceExtraction:
                 self.extract_sources()
                 self.track_sources()
         else:
-            self.camera = self.cameras()
+            self.camera = self.cameras
             print("Working on ", self.camera)
             self.setup()
             self.extract_sources()
@@ -219,7 +220,7 @@ class SourceExtraction:
                 print("An exception was raised: {0}".format(err))
                 raise
         self.dataFilePattern = config[self.camera]['dataFilePattern']
-        self.targetList = sorted(glob.glob(os.path.join(self.workBase, self.dataFilePattern)))
+        self.targetList = sorted(glob.glob(os.path.join(self.dataBase, self.dataFilePattern)))
         self.upperThreshold = float(config[self.camera]['upperThreshold'])
         self.lowerThreshold = float(config[self.camera]['lowerThreshold'])
         self.thresholdType = config[self.camera]['thresholdType']
@@ -229,8 +230,9 @@ class SourceExtraction:
             self.expand = None
         else:
             self.expand = np.ones(
-                int(config[self.camera]['expand']),
-                int(config[self.camera]['expand'])
+                (int(config[self.camera]['expand']),
+                 int(config[self.camera]['expand'])
+                 )
             )
         self.sourceSavePattern = config[self.camera]['sourceSavePattern']
         self.windowLength = int(config[self.camera]['windowLength'])
@@ -302,7 +304,7 @@ class SourceExtraction:
         neb = 0
 
         for i in tqdm.tqdm(range(len(filelist)), desc="Tracking Sources"):
-            meta = np.load(filelist[i])
+            meta = np.load(filelist[i], allow_pickle=True)
 
             if i == 0:
                 # Initialize the dictionary with initial detections
@@ -522,7 +524,7 @@ class SourceExtraction:
         for key in dictionary_keys:
             dictionary_fields.append(sources[key])
 
-        source_array = np.rec.fromarrays(dictionary_fields, names=dictionary_keys)
+        # source_array = np.rec.fromarrays(dictionary_fields, names=dictionary_keys)
         savename = os.path.join(self.workBase, self.overviewSaveName)
         np.save(savename, source_array)
         return
