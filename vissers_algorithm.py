@@ -185,6 +185,7 @@ class SourceExtraction:
         self.expand = []
         self.sourceSavePattern = ""
         self.windowLength = 15
+        self.minDetection = 0
         self.overviewSaveName = ""
         self.targetList = []
         self.sourceList = []
@@ -236,6 +237,7 @@ class SourceExtraction:
             )
         self.sourceSavePattern = config[self.camera]['sourceSavePattern']
         self.windowLength = int(config[self.camera]['windowLength'])
+        self.minDetection = int(config[self.camera]['minDetections'])
         self.overviewSaveName = config[self.camera]['overviewSaveName']
         self.sourceList = []
         self.numberSources = 0
@@ -520,11 +522,36 @@ class SourceExtraction:
                         neb += 1
 
         dictionary_keys = list(sources.keys())
-        dictionary_fields = []
-        for key in dictionary_keys:
-            dictionary_fields.append(sources[key])
+        cen_key = dictionary_keys[0::5]
+        con_key = dictionary_keys[1::5]
+        flu_key = dictionary_keys[2::5]
+        ext_key = dictionary_keys[3::5]
+        ori_key = dictionary_keys[4::5]
 
-        source_array = np.rec.fromarrays(dictionary_fields, names=dictionary_keys)
+        curated_keys = []
+        curated_fields = []
+
+        ctr = 0
+        for i in range(len(flu_key)):
+            if len(sources[flu_key[i]][sources[flu_key[i]] != 0]) < self.minDetection:
+                curated_keys.append(key_templates[0].replace("$$", str(ctr).zfill(4)))
+                curated_fields.append(sources[cen_key[i]])
+
+                curated_keys.append(key_templates[1].replace("$$", str(ctr).zfill(4)))
+                curated_fields.append(sources[con_key[i]])
+
+                curated_keys.append(key_templates[2].replace("$$", str(ctr).zfill(4)))
+                curated_fields.append(sources[flu_key[i]])
+
+                curated_keys.append(key_templates[3].replace("$$", str(ctr).zfill(4)))
+                curated_fields.append(sources[ext_key[i]])
+
+                curated_keys.append(key_templates[4].replace("$$", str(ctr).zfill(4)))
+                curated_fields.append(sources[ori_key[i]])
+
+                ctr += 1
+
+        source_array = np.rec.fromarrays(curated_fields, names=curated_keys)
         savename = os.path.join(self.workBase, self.overviewSaveName)
         np.save(savename, source_array)
         return
